@@ -1,0 +1,41 @@
+extends CharacterBody2D
+
+var anim: AnimatedSprite2D
+var attack_name := ""
+var idle_name := ""
+var attacking := false
+
+func _ready() -> void:
+	anim = $AnimatedSprite2D
+	var frames = anim.sprite_frames
+	attack_name = "attack" if frames.has_animation("attack") else frames.get_animation_names()[0]
+	if frames.has_animation("idle"):
+		idle_name = "idle"
+	frames.set_animation_loop(attack_name, false)
+	anim.animation_finished.connect(_on_finished)
+	_go_idle()
+
+func _go_idle() -> void:
+	if idle_name != "":
+		anim.play(idle_name)
+	else:
+		anim.animation = attack_name
+		anim.frame = 0
+		anim.pause()
+
+func _physics_process(delta: float) -> void:
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+	velocity.x = 0
+	move_and_slide()
+
+func attack() -> void:
+	if attacking:
+		return
+	attacking = true
+	anim.play(attack_name)
+
+func _on_finished() -> void:
+	if anim.animation == attack_name:
+		attacking = false
+		_go_idle()
